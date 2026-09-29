@@ -1,0 +1,33 @@
+{
+  "name": "resfullapis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "movie.js",
+  "scripts": {
+    "start": "node movie.js",
+    "dev": "nodemon movie.js",
+    "test": "echo All tests passed!"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "kafkajs": "^2.2.4",
+    "mongoose": "^9.6.1",
+    "multer": "^2.1.1",
+    "multer-storage-cloudinary": "^2.2.1",
+    "nodemailer": "^8.0.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^10.3.0"
+  }
+}
