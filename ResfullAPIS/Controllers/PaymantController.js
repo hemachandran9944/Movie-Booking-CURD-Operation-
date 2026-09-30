@@ -6,86 +6,86 @@ const mongoose = require('mongoose');
 
 exports.CreatePayment = async (req, res) => {
     const session = await mongoose.startSession();
+    let savedPayment;
     try {
         session.startTransaction();
         const { BookingId, Amount, PaymentMethod, PaymentStatus } = req.body;
-        const payment =  new Payment({
+        const payment = new Payment({
             BookingId: BookingId.trim(),
             Amount,
             PaymentMethod,
             PaymentStatus: PaymentStatus || 'Success',
         });
 
-
-        const savedPayment = await payment.save({session});
-
-        if (!savedPayment) {
-            return res.status(400).json({status: 'Failed', message: 'Payment creation failed!'});
-        }
-
+        savedPayment = await payment.save({ session });
 
         if (savedPayment.PaymentStatus === 'Confirmed' || savedPayment.PaymentStatus === 'Success') {
-            await Booking.findByIdAndUpdate(BookingId.trim(), { Status: 'Confirmed' }, {session});
+            await Booking.findByIdAndUpdate(BookingId.trim(), { Status: 'Confirmed' }, { session });
         }
-
         await session.commitTransaction();
+    } catch (error) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return res.status(400).json({ status: 'Failed', message: error.message });
+    } finally {
         session.endSession();
+    }
 
+    try {
         const PaymentDetail = await Payment.findById(savedPayment._id)
             .populate({
                 path: 'BookingId',
                 populate: [
-                    {path: 'Movie', select: 'MovieTitle MovieType language PosterImage'},
-                    {path: 'User', select: 'Name Email'}
+                    { path: 'Movie', select: 'MovieTitle MovieType language PosterImage' },
+                    { path: 'User', select: 'Name Email' }
                 ]
             });
 
-        const Gmail         =  PaymentDetail.BookingId.User.Email;
-        const Name          =  PaymentDetail.BookingId.User.Name;
-        const MovieTitle    =  PaymentDetail.BookingId.Movie.MovieTitle;
-        const MovieType     =  PaymentDetail.BookingId.Movie.MovieType;
-        const Language      =  PaymentDetail.BookingId.Movie.language;
-        const PosterImage   =  PaymentDetail.BookingId.Movie.PosterImage;
-        const ShowDate      =  PaymentDetail.BookingId.ShowDate.toDateString();
-        const ShowTime      =  PaymentDetail.BookingId.ShowTime;
-        const AmountPaid    =  PaymentDetail.Amount;
-        const TransactionId =  PaymentDetail.TransactionId;
+        if (!PaymentDetail || !PaymentDetail.BookingId ||
+            !PaymentDetail.BookingId.User || !PaymentDetail.BookingId.Movie) {
+            console.error('Booking / User / Movie not found for payment:', savedPayment._id);
+            return res.status(201).json({
+                status: 'Success',
+                message: 'Payment saved, but booking/user/movie details not found. Mail not sent.',
+                data: savedPayment
+            });
+        }
 
-        await producer.send({
-            topic: 'booking-success',
-            messages: [
-                {
-                    value: JSON.stringify({
-                        event: 'Booking Success',
-                        Name, 
-                        Gmail, 
-                        MovieTitle, 
-                        ShowDate, 
-                        ShowTime, 
-                        AmountPaid, 
-                        PosterImage, 
-                        language: Language,
-                        MovieType, 
-                        TransactionId
-
-                    }),
-                }
-            ],
-        });
-        console.log('Kafka Booking Success Event Sent!');
-        
-        return res.status(201).json({status: 'Success', data: PaymentDetail});
-
-    } catch (error) {
+        const Booked = PaymentDetail.BookingId;
 
         try {
-            if (session.inTransaction()) {
-                await session.abortTransaction();
-            }
-        } finally {
-            session.endSession();
+            await producer.send({
+                topic: 'booking-success',
+                messages: [{
+                    value: JSON.stringify({
+                        event: 'Booking Success',
+                        Name: Booked.User.Name,
+                        Gmail: Booked.User.Email,
+                        MovieTitle: Booked.Movie.MovieTitle,
+                        ShowDate: Booked.ShowDate.toDateString(),
+                        ShowTime: Booked.ShowTime,
+                        AmountPaid: PaymentDetail.Amount,
+                        PosterImage: Booked.Movie.PosterImage,
+                        language: Booked.Movie.language,
+                        MovieType: Booked.Movie.MovieType,
+                        TransactionId: PaymentDetail.TransactionId
+                    }),
+                }],
+            });
+            console.log('Kafka Booking Success Event Sent! To:', Booked.User.Email);
+        } catch (kafkaError) {
+            console.error('Kafka send failed:', kafkaError);
         }
-        return res.status(400).json({ status: 'Failed', message: error.message });
+
+        return res.status(201).json({ status: 'Success', data: PaymentDetail });
+    } catch (error) {
+        console.error('Post-payment error:', error);
+        return res.status(201).json({
+            status: 'Success',
+            message: 'Payment saved, but follow-up failed: ' + error.message,
+            data: savedPayment
+        });
     }
 };
 

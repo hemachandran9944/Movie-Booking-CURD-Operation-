@@ -2,13 +2,21 @@ const { consumer } = require('./Kafka');
 const { SendPaymentConfirmation, Mailer } = require('../Setting/OtpSender');
 
 const startBookingConsumer = async () => {
+    
     try {
         
         await consumer.subscribe({topic: 'booking-success', fromBeginning: true});
         console.log('Listen Booking Consumer');
         await consumer.run({
             eachMessage: async ({topic, partition, message}) => {
-                const data = JSON.parse(message.value.toString());
+                let data; 
+                try {
+                    const data = JSON.parse(message.value.toString());
+                } catch (error) {
+                    console.error('Invalid JSON message, skipping');
+                    return;
+                }
+                
                 console.log(`Kafka event received! Sending email to User: ${data.Gmail}`);
 
                 const EmailOptions = await SendPaymentConfirmation(
