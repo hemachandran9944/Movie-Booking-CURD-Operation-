@@ -11,7 +11,7 @@ const startBookingConsumer = async () => {
             eachMessage: async ({topic, partition, message}) => {
                 let data; 
                 try {
-                    const data = JSON.parse(message.value.toString());
+                    data = JSON.parse(message.value.toString());
                 } catch (error) {
                     console.error('Invalid JSON message, skipping');
                     return;
@@ -45,6 +45,8 @@ const startBookingConsumer = async () => {
         });
     } catch (error) {
         console.log('Consumer initialization failed:', error.message);
+        console.log('Retrying in 10s...');
+        setTimeout(startBookingConsumer, 10000); 
     }
 };
 

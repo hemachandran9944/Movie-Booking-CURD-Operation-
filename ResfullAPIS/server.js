@@ -1,3 +1,4 @@
+global.crypto = require('crypto');
 require('dotenv').config();
 const express = require('express');
 const connectDB = require('./Config/AtlesDB');
@@ -55,7 +56,7 @@ async function Startserver() {
         await connectDB();
         await connectKafka();
         await startBookingConsumer(); 
-        
+
         const PORT  = process.env.PORT || 8000;
         app.listen(PORT, ()=>{
             console.log(` Server running on port ${PORT}`);

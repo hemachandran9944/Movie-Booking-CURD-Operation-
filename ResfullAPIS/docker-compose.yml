@@ -3,7 +3,7 @@ version: '3.8'
 services:
 
   nginx_balancer:
-    image: nginx:latest
+    image: nginx:1.25.3
     container_name: nginx_load_balancer
     ports:
       - "80:80"
@@ -70,7 +70,7 @@ services:
       - booking_network
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.5.0
     container_name: booking_zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -79,7 +79,7 @@ services:
       - booking_network
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.5.0
     container_name: booking_kafka
     depends_on:
       - zookeeper
@@ -96,9 +96,10 @@ services:
       - kafka_data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - booking_network
 

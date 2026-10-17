@@ -49,7 +49,6 @@ UserSchema.pre('save', async function () {
         const salt = await bcrypt.genSalt(10);
         this.Password = await bcrypt.hash(this.Password, salt);
         console.log('Hash password',this.Password);
-
     } catch (error) {
         console.log('Password hash error', error);
         throw error;

@@ -64,7 +64,7 @@ const SendPaymentConfirmation = async (Name, Email, MovieTitle, ShowDate, ShowTi
     return {
         from: `Hema Theater <${process.env.EMAIL_USER}>`,
         to: Email,
-        subject: 'CONFIRMED: Your Movie Ticket Booking - Hema Theater',
+        subject: 'CONFIRMED: Your Movie Ticket Booking - Hema Theater 🍿',
         text: `
 Dear ${Name},
 

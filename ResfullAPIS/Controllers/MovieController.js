@@ -1,5 +1,5 @@
 const Movie = require('../Modules/Movie');
-const { uploadImage } = require('../config/cloudinary');
+const { uploadImage } = require('../Config/Cloudinary');
 
 //Movie Create
 

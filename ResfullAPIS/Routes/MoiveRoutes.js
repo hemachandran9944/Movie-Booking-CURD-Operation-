@@ -1,7 +1,8 @@
+global.crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const MovieController = require('../Controllers/MovieController');
-const { upload } = require('../config/cloudinary');
+const { upload } = require('../Config/Cloudinary');
 const { AuthorizationTokenVerify} = require('../Setting/Autho');
 
 
